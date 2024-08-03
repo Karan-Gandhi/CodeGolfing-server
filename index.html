@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Code Golfing Challenge</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        line-height: 1.6;
+        margin: 0;
+        padding: 20px;
+        background-color: #f4f4f4;
+      }
+      .container {
+        max-width: 800px;
+        margin: auto;
+        background: white;
+        padding: 20px;
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+      h1,
+      h2 {
+        color: #333;
+      }
+      textarea {
+        width: 100%;
+        height: 200px;
+        margin-bottom: 10px;
+      }
+      input,
+      select,
+      button {
+        margin-bottom: 10px;
+      }
+      button {
+        background-color: #4caf50;
+        color: white;
+        padding: 10px 15px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #45a049;
+      }
+      #results,
+      #leaderboard {
+        margin-top: 20px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        padding: 10px;
+        border: 1px solid #ddd;
+        text-align: left;
+      }
+      th {
+        background-color: #f2f2f2;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Code Golfing Challenge</h1>
+
+      <h2>Non Duplicate elements</h2>
+      <p>
+        Given an array where exactly one element occurs odd number of times, find that element. The first line contains T, the number of testcases, then T test
+        cases follow. Each testcase contains a number N, the number of elements in the array and the next line contains N integers, the array itself.
+      </p>
+
+      <h3>Constraints</h3>
+      <p>
+        0 <= T <= 100 <br />
+        0 <= n <= 1e4 <br />
+        0 <= a_i <= 1e9
+      </p>
+
+      <h2>Leaderboard</h2>
+      <button onclick="getLeaderboard()">Refresh Leaderboard</button>
+      <div id="leaderboard"></div>
+
+      <h2>Submit Your Code</h2>
+      <textarea id="code" placeholder="Enter your code here"></textarea>
+      <input type="text" id="userId" placeholder="Enter your user ID" />
+      <select id="language">
+        <option value="cpp">C++</option>
+        <option value="python">Python</option>
+      </select>
+      <select id="problemId">
+        <option value="problem1">Problem 1</option>
+      </select>
+      <button onclick="submitCode()">Submit</button>
+
+      <div id="results"></div>
+    </div>
+
+    <script>
+      const API_URL = "http://localhost:5000";
+
+      async function submitCode() {
+        const code = document.getElementById("code").value;
+        const userId = document.getElementById("userId").value;
+        const language = document.getElementById("language").value;
+        const problemId = document.getElementById("problemId").value;
+
+        const response = await fetch(`${API_URL}/submit`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            source_code: code,
+            user_id: userId,
+            language: language,
+            problem_id: problemId,
+          }),
+        });
+
+        const data = await response.json();
+        displayResults(data);
+      }
+
+      function displayResults(data) {
+        const resultsDiv = document.getElementById("results");
+        let html = "<h3>Submission Results</h3>";
+        html += `<p>Code Length: ${data.code_length}</p>`;
+        html += `<p>All Tests Passed: ${data.all_passed ? "Yes" : "No"}</p>`;
+        html += "<h4>Test Case Results:</h4>";
+        html += "<ul>";
+        data.results.forEach((result, index) => {
+          html += `<li>Test Case ${index + 1}: ${result.status}`;
+          if (result.message) {
+            html += ` - ${result.message}`;
+          }
+          html += "</li>";
+        });
+        html += "</ul>";
+        resultsDiv.innerHTML = html;
+      }
+
+      async function getLeaderboard() {
+        const language = document.getElementById("language").value;
+        const problemId = document.getElementById("problemId").value;
+
+        const response = await fetch(`${API_URL}/leaderboard/${problemId}/${language}`);
+        const data = await response.json();
+        displayLeaderboard(data);
+      }
+
+      function displayLeaderboard(data) {
+        const leaderboardDiv = document.getElementById("leaderboard");
+        let html = "<table>";
+        html += "<tr><th>Rank</th><th>User ID</th><th>Code Length</th></tr>";
+        data.forEach((entry, index) => {
+          html += `<tr><td>${index + 1}</td><td>${entry.user_id}</td><td>${entry.length}</td></tr>`;
+        });
+        html += "</table>";
+        leaderboardDiv.innerHTML = html;
+      }
+    </script>
+  </body>
+</html>
